@@ -8,12 +8,17 @@ type Event @entity {
   timestamp: BigInt
   status: String
   action: String
+  data: Data
   txAction: String
   tokenTransfer: String
-  gasInfo: String
+  gasPrice: BigInt
+  gasLimit: BigInt
   value: BigInt
 }
 
 type Data @entity {
   id: ID!
+  name: String
+  numDots: BigInt
+  endpoint: String
 }

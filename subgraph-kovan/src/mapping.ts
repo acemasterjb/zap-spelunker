@@ -8,13 +8,19 @@ import {
   Returned,
   OwnershipTransferred
 } from "../generated/Bondage/Bondage"
-import { Event } from "../generated/schema"
+import { Event, Data } from "../generated/schema"
 
 export function handleBound(event: Bound): void {
-  let bondID = event.params.endpoint.toHex() + event.params.holder.toHex()
+  let bondID = event.params.endpoint.toHex() + event.params.holder.toHexString() + event.transaction.hash.toHex()
   let bond = Event.load(bondID)
   if (bond == null){
     bond = new Event(bondID)
+  }
+
+ let dataID = event.params.oracle.toHexString() + event.params.endpoint.toString() + event.transaction.hash.toHex()
+  let data = Data.load(dataID)
+  if (data == null){
+    data = new Data(dataID)
   }
 
   bond.txnHash = event.transaction.hash
@@ -26,20 +32,59 @@ export function handleBound(event: Bound): void {
   bond.txAction = "to"
   bond.tokenTransfer = null
   
-  let gasUsed = event.transaction.gasUsed.toI32()
-  let gasPrice = event.transaction.gasPrice.toI32()
+  bond.transactionFee = event.transaction.gasUsed.times(event.transaction.gasPrice)
 
-  bond.transactionFee = BigInt.fromI32(gasUsed * gasPrice)
-
-  let gasPriceStr = event.transaction.gasPrice.toString()
-  let gasLimitStr = event.block.gasLimit.toString()
-  bond.gasInfo = gasPriceStr + "Gas Used From " + gasLimitStr + " Gas Limit @ "
-                  + `${Math.round(gasPrice * 1 ** -18)}` + " ether "
-                  + "(" + `${Math.round(gasPrice * 10 ** -9)}` + " gwei)"
+  bond.gasPrice = event.transaction.gasPrice
+  bond.gasLimit = event.block.gasLimit
   bond.action = "bond"
+
+  data.name = "bond"
+  data.endpoint = event.params.endpoint.toString()
+  data.numDots = event.params.numDots
+
+  bond.data = data.id
+
+  bond.save()
+  data.save()
 }
 
-export function handleUnbound(event: Unbound): void {}
+export function handleUnbound(event: Unbound): void {
+  let bondID = event.params.endpoint.toHex() + event.params.holder.toHexString() + event.transaction.hash.toHex()
+  let bond = Event.load(bondID)
+  if (bond == null){
+    bond = new Event(bondID)
+  }
+
+  let dataID = event.params.oracle.toHexString() + event.params.endpoint.toString() + event.transaction.hash.toHex()
+  let data = Data.load(dataID)
+  if (data == null){
+    data = new Data(dataID)
+  }
+
+  bond.txnHash = event.transaction.hash
+  bond.block = event.block.number
+  bond.to = event.transaction.to.toHexString()
+  bond.from = event.transaction.from.toHexString()
+  bond.timestamp = event.block.timestamp
+  // bond.status = 
+  bond.txAction = "to"
+  bond.tokenTransfer = null
+  
+  bond.transactionFee = event.transaction.gasUsed.times(event.transaction.gasPrice)
+
+  bond.gasPrice = event.transaction.gasPrice
+  bond.gasLimit = event.block.gasLimit
+  bond.action = "unbond"
+
+  data.name = "unbond"
+  data.endpoint = event.params.endpoint.toString()
+  data.numDots = event.params.numDots
+
+  bond.data = data.id
+
+  bond.save()
+  data.save()
+}
 
 export function handleEscrowed(event: Escrowed): void {}
 
