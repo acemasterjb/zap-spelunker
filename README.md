@@ -2,4 +2,6 @@
 Subpraph for Zap Block Explorer
 
 ## Networks
-**Kovan**: https://thegraph.com/explorer/subgraph/acemasterjb/zap-block-explorer-kovan
+### Kovan
+**Graph Explorer**: https://thegraph.com/explorer/subgraph/acemasterjb/zap-block-explorer-kovan
+**API**: https://api.thegraph.com/subgraphs/name/acemasterjb/zap-block-explorer-kovan
