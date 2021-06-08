@@ -36,4 +36,7 @@ dataSources:
           handler: handleReturned
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
+      callHandlers:
+        - function: bond(address,bytes32,uint256)
+          handler: handleBond
       file: ./src/mapping.ts
