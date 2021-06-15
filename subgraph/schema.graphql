@@ -1,0 +1,27 @@
+type Event @entity {
+  id: ID!
+  txnHash: Bytes!
+  block: BigInt! # address
+  to: String! # address
+  from: String!
+  transactionFee: BigInt
+  timestamp: BigInt
+  status: String
+  action: String
+  data: Data
+  txAction: String
+  tokenTransfer: String
+  gasPrice: BigInt
+  gasLimit: BigInt
+  gasUsed: BigInt
+  value: BigInt
+}
+
+type Data @entity {
+  id: ID!
+  name: String
+  numDots: BigInt
+  numZap: BigInt
+  endpoint: String
+  holder: String
+}
