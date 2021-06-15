@@ -1,5 +1,8 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { Address } from "@graphprotocol/graph-ts"
+
 import {
+  BondCall,
+  UnbondCall,
   Bondage,
   Bound,
   Unbound,
@@ -8,39 +11,65 @@ import {
   Returned,
   OwnershipTransferred
 } from "../generated/Bondage/Bondage"
+// import { Registry } from "../generated/Bondage/Registry"
+
 import { Event, Data } from "../generated/schema"
 
+// import {getZapRequired, getEnd} from "./utils"
+
+// const REGADDRESS = Address.fromString("0x26BC483E8f4E868B031b29973232c188B941a3D8")
+const BONDADDRESS = Address.fromString("0x6164d3A0644324155cd2ad5CDDe5e01c073b79f1")
+
 export function handleBound(event: Bound): void {
-  let bondID = event.params.endpoint.toHex() + event.params.holder.toHexString() + event.transaction.hash.toHex()
+}
+
+export function handleUnbound(event: Unbound): void {
+
+}
+
+export function handleBond(call: BondCall): void {
+  let bondID = call.inputs.endpoint.toHex() + call.from.toHexString() + call.transaction.hash.toHex()
   let bond = Event.load(bondID)
   if (bond == null){
     bond = new Event(bondID)
   }
 
- let dataID = event.params.oracle.toHexString() + event.params.endpoint.toString() + event.transaction.hash.toHex()
+ let dataID = call.inputs.oracleAddress.toHexString() + call.inputs.endpoint.toString() + call.transaction.hash.toHex()
   let data = Data.load(dataID)
   if (data == null){
     data = new Data(dataID)
   }
 
-  bond.txnHash = event.transaction.hash
-  bond.block = event.block.number
-  bond.to = event.transaction.to.toHexString()
-  bond.from = event.transaction.from.toHexString()
-  bond.timestamp = event.block.timestamp
+
+  bond.txnHash = call.transaction.hash
+  bond.block = call.block.number
+  bond.to = call.transaction.to.toHexString()
+  bond.from = call.transaction.from.toHexString()
+  bond.timestamp = call.block.timestamp
   // bond.status = 
   bond.txAction = "to"
   bond.tokenTransfer = null
   
-  bond.transactionFee = event.transaction.gasUsed.times(event.transaction.gasPrice)
+  bond.transactionFee = call.transaction.gasUsed.times(call.transaction.gasPrice)
 
-  bond.gasPrice = event.transaction.gasPrice
-  bond.gasLimit = event.block.gasLimit
+  bond.gasPrice = call.transaction.gasPrice
+  bond.gasLimit = call.transaction.gasUsed
   bond.action = "bond"
 
   data.name = "bond"
-  data.endpoint = event.params.endpoint.toString()
-  data.numDots = event.params.numDots
+  data.endpoint = call.inputs.endpoint.toString()
+  data.numDots = call.inputs.numDots
+
+  const bondage = Bondage.bind(BONDADDRESS)
+  let numZap = bondage.try_calcZapForDots(call.inputs.oracleAddress, call.inputs.endpoint, call.inputs.numDots)
+  if (!numZap.reverted) {
+    data.numZap = numZap.value    
+  } else {
+    bond.status = "failed"
+    bond.save()
+    return
+  }
+  data.holder = call.from.toHexString()
 
   bond.data = data.id
 
@@ -48,37 +77,49 @@ export function handleBound(event: Bound): void {
   data.save()
 }
 
-export function handleUnbound(event: Unbound): void {
-  let bondID = event.params.endpoint.toHex() + event.params.holder.toHexString() + event.transaction.hash.toHex()
+export function handleUnbond(call: UnbondCall): void {
+  let bondID = call.inputs.endpoint.toHex() + call.from.toHexString() + call.transaction.hash.toHex()
   let bond = Event.load(bondID)
   if (bond == null){
     bond = new Event(bondID)
   }
 
-  let dataID = event.params.oracle.toHexString() + event.params.endpoint.toString() + event.transaction.hash.toHex()
+  let dataID = call.inputs.oracleAddress.toHexString() + call.inputs.endpoint.toString() + call.transaction.hash.toHex()
   let data = Data.load(dataID)
   if (data == null){
     data = new Data(dataID)
   }
 
-  bond.txnHash = event.transaction.hash
-  bond.block = event.block.number
-  bond.to = event.transaction.to.toHexString()
-  bond.from = event.transaction.from.toHexString()
-  bond.timestamp = event.block.timestamp
+
+  bond.txnHash = call.transaction.hash
+  bond.block = call.block.number
+  bond.to = call.transaction.to.toHexString()
+  bond.from = call.transaction.from.toHexString()
+  bond.timestamp = call.block.timestamp
   // bond.status = 
   bond.txAction = "to"
   bond.tokenTransfer = null
   
-  bond.transactionFee = event.transaction.gasUsed.times(event.transaction.gasPrice)
+  bond.transactionFee = call.transaction.gasUsed.times(call.transaction.gasPrice)
 
-  bond.gasPrice = event.transaction.gasPrice
-  bond.gasLimit = event.block.gasLimit
+  bond.gasPrice = call.transaction.gasPrice
+  bond.gasLimit = call.transaction.gasUsed
   bond.action = "unbond"
 
   data.name = "unbond"
-  data.endpoint = event.params.endpoint.toString()
-  data.numDots = event.params.numDots
+  data.endpoint = call.inputs.endpoint.toString()
+  data.numDots = call.inputs.numDots
+
+  const bondage = Bondage.bind(BONDADDRESS)
+  let numZap = bondage.try_calcZapForDots(call.inputs.oracleAddress, call.inputs.endpoint, call.inputs.numDots)
+  if (!numZap.reverted) {
+    data.numZap = numZap.value    
+  } else {
+    bond.status = "failed"
+    bond.save()
+    return
+  }
+  data.holder = call.from.toHexString()
 
   bond.data = data.id
 

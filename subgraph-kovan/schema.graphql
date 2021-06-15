@@ -13,6 +13,7 @@ type Event @entity {
   tokenTransfer: String
   gasPrice: BigInt
   gasLimit: BigInt
+  gasUsed: BigInt
   value: BigInt
 }
 
@@ -20,5 +21,7 @@ type Data @entity {
   id: ID!
   name: String
   numDots: BigInt
+  numZap: BigInt
   endpoint: String
+  holder: String
 }

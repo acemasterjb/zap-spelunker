@@ -23,6 +23,8 @@ dataSources:
       abis:
         - name: Bondage
           file: ./abis/Bondage.json
+        - name: Registry
+          file: ./abis/Registry.json
       eventHandlers:
         - event: Bound(indexed address,indexed address,indexed bytes32,uint256,uint256)
           handler: handleBound
@@ -39,4 +41,6 @@ dataSources:
       callHandlers:
         - function: bond(address,bytes32,uint256)
           handler: handleBond
+        - function: unbond(address,bytes32,uint256)
+          handler: handleUnbond
       file: ./src/mapping.ts
